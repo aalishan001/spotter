@@ -1,7 +1,11 @@
 from django.http import JsonResponse
 from database.models import muscles, levels, exercises, goals
 from django.db.models import Q
+from django.core.serializers import serialize
+from django.views.decorators.http import require_http_methods
 
+
+@require_http_methods(["GET", "OPTIONS"])
 def get_routine(request):
 
     goal = request.GET.get('goal')
@@ -10,40 +14,48 @@ def get_routine(request):
 
 #only 6 day, bro split in use right now
     
-    noofexercise = int(levels.objects.filter(level=exp).values('number'))
+    level_object = levels.objects.filter(level=exp).first()  
+    if level_object:
+        noofexercise = int(level_object.number)  
+    else:
 
-    sets = goals.objects.filter(goal=goal).values('sets')
-    reps = goals.objects.filter(goal=goal).values('reps')
-    progover = goals.objects.filter(goal=goal).values('progover')
+        noofexercise = 6  
+
+
+    sets = list(goals.objects.filter(goal=goal).values('sets'))
+    reps = list(goals.objects.filter(goal=goal).values('reps'))
+    progover = list(goals.objects.filter(goal=goal).values('progover'))
     
  
 
-    exer_all = exercises.objects.filter(equip=equip,level_id=exp)
 
 # days and named and fixed with muscle and muscles are fixed with pairs TEMPORARY
 
-    mon = exer_all.filter(muscles__group= 'chest')[:noofexercise]
+    mon = list(exercises.objects.filter(equip=equip,level_id=exp,muscle__group= 'chest')[:noofexercise].values('exercise','muscle_id'))
 
-    tue = exer_all.filter(muscles__group= 'tricep')[:noofexercise]
+    tue = list(exercises.objects.filter(equip=equip,level_id=exp,muscle__group= 'tricep')[:noofexercise].values('exercise','muscle_id'))
 
-    wed = exer_all.filter(muscles__group= 'back')[:noofexercise]
+    wed = list(exercises.objects.filter(equip=equip,level_id=exp,muscle__group= 'back')[:noofexercise].values('exercise','muscle_id'))
 
-    thu = exer_all.filter(muscles__group='bicep')[:noofexercise]
+    thu = list(exercises.objects.filter(equip=equip,level_id=exp,muscle__group= 'bicep')[:noofexercise].values('exercise','muscle_id'))
 
-    fri = exer_all.filter(muscles__group='legs')[:noofexercise]
+    fri = list(exercises.objects.filter(equip=equip,level_id=exp,muscle__group= 'legs')[:noofexercise].values('exercise','muscle_id'))
 
-    sat = exer_all.filter(muscles__group='shoulder')[:noofexercise]
+    sat = list(exercises.objects.filter(equip=equip,level_id=exp,muscle__group= 'shoulder')[:noofexercise].values('exercise','muscle_id'))
 
 
 
     return JsonResponse({
+        'goal' : goal,
+        'equip' : equip,
+        'exp' : exp,
         'sets': sets,
         'reps': reps,
         'progover': progover,
-        'mon': mon,
-        'tue': tue,
-        'wed': wed,
-        'thu': thu,
-        'fri': fri,
-        'sat': sat,
+        'MONDAY': mon,
+        'TUESDAY': tue,
+        'WEDNESDAY': wed,
+        'THURSDAY': thu,
+        'FRIDAY': fri,
+        'SATURDAY': sat,
     }, safe=False)

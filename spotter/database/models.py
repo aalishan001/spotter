@@ -7,14 +7,14 @@ class muscles(models.Model):
     paircode = models.CharField(max_length=10)
 
     def __str__(self):
-        return self.muscle
+        return self.group
 
 class levels(models.Model):
     level= models.CharField(max_length=30, primary_key=True)
     number = models.CharField(max_length=30)
     
     def __str__(self):
-        return self.level
+        return self.number
 
 
 class exercises(models.Model):
